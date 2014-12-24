@@ -177,4 +177,46 @@ public class BufferedSinkTest {
     sink.close();
     assertEquals('a', data.readByte());
   }
+
+  @Test public void longDecimalString() throws IOException {
+    assertLongDecimalString(Long.MIN_VALUE);
+    assertLongDecimalString(Long.MIN_VALUE + 1);
+    assertLongDecimalString(Integer.MIN_VALUE - 1L);
+    assertLongDecimalString(Integer.MIN_VALUE);
+    assertLongDecimalString(-1);
+    assertLongDecimalString(0);
+    assertLongDecimalString(1);
+    assertLongDecimalString(Integer.MAX_VALUE);
+    assertLongDecimalString(Integer.MAX_VALUE + 1L);
+    assertLongDecimalString(Long.MAX_VALUE);
+    assertLongDecimalString(Long.MAX_VALUE - 1);
+  }
+
+  private void assertLongDecimalString(long value) throws IOException {
+    sink.writeDecimalLong(value).flush();
+    String expected = Long.toString(value);
+    String actual = data.readUtf8();
+    assertEquals(actual, actual, expected);
+  }
+
+  @Test public void longHexString() throws IOException {
+    assertLongHexString(Long.MIN_VALUE);
+    assertLongHexString(Long.MIN_VALUE + 1);
+    assertLongHexString(Integer.MIN_VALUE - 1L);
+    assertLongHexString(Integer.MIN_VALUE);
+    assertLongHexString(-1);
+    assertLongHexString(0);
+    assertLongHexString(1);
+    assertLongHexString(Integer.MAX_VALUE);
+    assertLongHexString(Integer.MAX_VALUE + 1L);
+    assertLongHexString(Long.MAX_VALUE);
+    assertLongHexString(Long.MAX_VALUE - 1);
+  }
+
+  private void assertLongHexString(long value) throws IOException {
+    sink.writeHexadecimalUnsignedLong(value).flush();
+    String expected = String.format("%16x", value).replace(' ', '0');
+    String actual = data.readUtf8();
+    assertEquals(value + " --> " + actual, actual, expected);
+  }
 }

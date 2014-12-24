@@ -228,6 +228,15 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readLongLe();
   }
 
+  @Override public long readDecimalLong() throws IOException {
+    throw new UnsupportedOperationException("Not implemented.");
+  }
+
+  @Override public long readHexadecimalUnsignedLong() throws IOException {
+    require(16);
+    return buffer.readHexadecimalUnsignedLong();
+  }
+
   @Override public void skip(long byteCount) throws IOException {
     if (closed) throw new IllegalStateException("closed");
     while (byteCount > 0) {

@@ -2,6 +2,7 @@ package okio;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
@@ -411,6 +412,72 @@ public class BufferedSourceTest {
       source.require(Segment.SIZE + 3);
       fail();
     } catch (EOFException expected) {
+    }
+  }
+
+  @Test public void longHexString() throws IOException {
+    assertLongHexString("8000000000000000");
+    assertLongHexString("fffffffffffffffe");
+    assertLongHexString("FFFFFFFFFFFFFFFe");
+    assertLongHexString("ffffffffffffffff");
+    assertLongHexString("FFFFFFFFFFFFFFFF");
+    assertLongHexString("0000000000000000");
+    assertLongHexString("0000000000000001");
+    assertLongHexString("7999999999999999");
+  }
+
+  private void assertLongHexString(String s) throws IOException {
+    data.writeUtf8(s);
+    long expected = new BigInteger(s, 16).longValue();
+    long actual = source.readHexadecimalUnsignedLong();
+    assertEquals(s + " --> " + expected, expected, actual);
+  }
+
+  @Test public void longHexStringAcrossSegment() throws IOException {
+    data.writeUtf8(repeat('a', Segment.SIZE - 8)).writeUtf8("FFFFFFFFFFFFFFFF");
+    source.readUtf8(Segment.SIZE - 8);
+    assertEquals(-1, source.readHexadecimalUnsignedLong());
+  }
+
+  @Test public void invalidLongHexStringThrows1() throws IOException {
+    try {
+      data.writeUtf8("fffffffffffffffz");
+      source.readHexadecimalUnsignedLong();
+    } catch (NumberFormatException e) {
+      assertEquals("Non-hexadecimal byte 0x7a after 'fffffffffffffff'.", e.getMessage());
+    }
+  }
+
+  @Test public void invalidLongHexStringThrows2() throws IOException {
+    try {
+      // Before segment split.
+      data.writeUtf8(repeat('a', Segment.SIZE - 8)).writeUtf8("fffffffzffffffff");
+      source.readUtf8(Segment.SIZE - 8);
+      source.readHexadecimalUnsignedLong();
+    } catch (NumberFormatException e) {
+      assertEquals("Non-hexadecimal byte 0x7a after 'fffffff'.", e.getMessage());
+    }
+  }
+
+  @Test public void invalidLongHexStringThrows3() throws IOException {
+    try {
+      // After segment split at beginning.
+      data.writeUtf8(repeat('a', Segment.SIZE - 8)).writeUtf8("ffffffffzfffffff");
+      source.readUtf8(Segment.SIZE - 8);
+      source.readHexadecimalUnsignedLong();
+    } catch (NumberFormatException e) {
+      assertEquals("Non-hexadecimal byte 0x7a after 'ffffffff'.", e.getMessage());
+    }
+  }
+
+  @Test public void invalidLongHexStringThrows4() throws IOException {
+    try {
+      // After segment split at end.
+      data.writeUtf8(repeat('a', Segment.SIZE - 8)).writeUtf8("fffffffffffffffz");
+      source.readUtf8(Segment.SIZE - 8);
+      source.readHexadecimalUnsignedLong();
+    } catch (NumberFormatException e) {
+      assertEquals("Non-hexadecimal byte 0x7a after 'fffffffffffffff'.", e.getMessage());
     }
   }
 }

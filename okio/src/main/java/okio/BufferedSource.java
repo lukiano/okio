@@ -70,6 +70,21 @@ public interface BufferedSource extends Source {
   long readLongLe() throws IOException;
 
   /**
+   * Reads a long from this source in signed decimal form (i.e., as a string in base 10). This
+   * will iterate until a non-digit character is found.
+   *
+   * @throws NumberFormatException if the found digits do not fit into a {@code long}.
+   */
+  long readDecimalLong() throws IOException;
+
+  /**
+   * Removes 16 bytes from this source and returns a long from the hexadecimal representation.
+   *
+   * @throws NullPointerException if the 16 bytes are not valid hexadecimal.
+   */
+  long readHexadecimalUnsignedLong() throws IOException;
+
+  /**
    * Reads and discards {@code byteCount} bytes from this source. Throws an
    * {@link java.io.EOFException} if the source is exhausted before the
    * requested bytes can be skipped.
